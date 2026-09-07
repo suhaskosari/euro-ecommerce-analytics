@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Cleaned CSV exports loaded as-is by python/load_warehouse.py.
+    tables:
+      - name: customers
+      - name: products
+      - name: orders
+      - name: order_items
+      - name: payments
+      - name: returns
+      - name: marketing_spend
+      - name: exchange_rates

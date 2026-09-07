@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: dim_country
+    columns:
+      - name: country_code
+        tests: [unique, not_null]
+
+  - name: dim_customer
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: country_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_country')
+                field: country_code
+
+  - name: dim_product
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+
+  - name: dim_date
+    columns:
+      - name: date_day
+        tests: [unique, not_null]
+
+  - name: fct_orders
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_id
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['completed', 'cancelled']
+
+  - name: fct_returns
+    columns:
+      - name: return_id
+        tests: [unique, not_null]
+      - name: order_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('fct_orders')
+                field: order_id
+
+  - name: fct_marketing_spend
+    columns:
+      - name: country_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_country')
+                field: country_code

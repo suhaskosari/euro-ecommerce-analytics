@@ -1,0 +1,203 @@
+{
+  "latest_month": "2025-12-01",
+  "total_revenue_eur": 6241305.43,
+  "total_orders": 20225,
+  "top_countries_by_revenue": {
+    "DE": 1591653.93,
+    "FR": 1243979.1,
+    "GB": 1225857.98
+  },
+  "latest_month_by_country": [
+    {
+      "country_code": "DE",
+      "net_revenue_eur": 132387.91,
+      "orders_count": 395,
+      "avg_order_value_eur": 335.16,
+      "mom_revenue_growth_pct": 32.79
+    },
+    {
+      "country_code": "ES",
+      "net_revenue_eur": 51873.68,
+      "orders_count": 171,
+      "avg_order_value_eur": 303.35,
+      "mom_revenue_growth_pct": 17.64
+    },
+    {
+      "country_code": "FR",
+      "net_revenue_eur": 105067.16,
+      "orders_count": 319,
+      "avg_order_value_eur": 329.36,
+      "mom_revenue_growth_pct": 33.86
+    },
+    {
+      "country_code": "GB",
+      "net_revenue_eur": 105518.6,
+      "orders_count": 371,
+      "avg_order_value_eur": 284.42,
+      "mom_revenue_growth_pct": 24.33
+    },
+    {
+      "country_code": "IT",
+      "net_revenue_eur": 37115.85,
+      "orders_count": 125,
+      "avg_order_value_eur": 296.93,
+      "mom_revenue_growth_pct": 22.36
+    },
+    {
+      "country_code": "NL",
+      "net_revenue_eur": 57073.37,
+      "orders_count": 174,
+      "avg_order_value_eur": 328.01,
+      "mom_revenue_growth_pct": 27.32
+    },
+    {
+      "country_code": "SE",
+      "net_revenue_eur": 17712.65,
+      "orders_count": 63,
+      "avg_order_value_eur": 281.15,
+      "mom_revenue_growth_pct": -38.02
+    }
+  ],
+  "top_return_reasons": [
+    {
+      "return_reason": "wrong_size",
+      "returns_count": 245.0,
+      "total_refund_eur": 55841.14
+    },
+    {
+      "return_reason": "late_delivery",
+      "returns_count": 239.0,
+      "total_refund_eur": 47419.36
+    },
+    {
+      "return_reason": "not_as_described",
+      "returns_count": 238.0,
+      "total_refund_eur": 54748.27
+    }
+  ],
+  "top_products_by_revenue": [
+    {
+      "product_name": "Electronics Item 129",
+      "category": "Electronics",
+      "gross_revenue_eur": 209240.99,
+      "margin_pct": 51.45,
+      "return_rate_pct": 4.949999809265137
+    },
+    {
+      "product_name": "Electronics Item 144",
+      "category": "Electronics",
+      "gross_revenue_eur": 187524.96,
+      "margin_pct": 47.69,
+      "return_rate_pct": 10.329999923706055
+    },
+    {
+      "product_name": "Electronics Item 112",
+      "category": "Electronics",
+      "gross_revenue_eur": 187269.39,
+      "margin_pct": 40.7,
+      "return_rate_pct": 8.789999961853027
+    },
+    {
+      "product_name": "Electronics Item 75",
+      "category": "Electronics",
+      "gross_revenue_eur": 186252.42,
+      "margin_pct": 41.61,
+      "return_rate_pct": 5.829999923706055
+    },
+    {
+      "product_name": "Electronics Item 55",
+      "category": "Electronics",
+      "gross_revenue_eur": 184940.7,
+      "margin_pct": 47.69,
+      "return_rate_pct": 5.139999866485596
+    }
+  ],
+  "biggest_revenue_anomalies": [
+    {
+      "date": "2025-03-03",
+      "net_revenue_eur": 27139.28,
+      "seasonal_zscore": 10.57,
+      "direction": "spike"
+    },
+    {
+      "date": "2025-03-04",
+      "net_revenue_eur": 27878.79,
+      "seasonal_zscore": 9.55,
+      "direction": "spike"
+    },
+    {
+      "date": "2025-09-05",
+      "net_revenue_eur": 14752.3,
+      "seasonal_zscore": 8.3,
+      "direction": "spike"
+    },
+    {
+      "date": "2025-05-13",
+      "net_revenue_eur": 11400.0,
+      "seasonal_zscore": 7.71,
+      "direction": "spike"
+    },
+    {
+      "date": "2024-11-27",
+      "net_revenue_eur": 16567.71,
+      "seasonal_zscore": 5.83,
+      "direction": "spike"
+    }
+  ],
+  "rfm_segments": [
+    {
+      "segment": "Champions",
+      "customers": 679,
+      "total_revenue_eur": 1949237.5,
+      "avg_recency_days": 20.7
+    },
+    {
+      "segment": "Potential Loyalist",
+      "customers": 1130,
+      "total_revenue_eur": 1419181.2,
+      "avg_recency_days": 41.3
+    },
+    {
+      "segment": "At Risk",
+      "customers": 701,
+      "total_revenue_eur": 1321348.2,
+      "avg_recency_days": 173.3
+    },
+    {
+      "segment": "Hibernating",
+      "customers": 891,
+      "total_revenue_eur": 784085.0,
+      "avg_recency_days": 259.6
+    },
+    {
+      "segment": "Loyal",
+      "customers": 580,
+      "total_revenue_eur": 767453.6,
+      "avg_recency_days": 18.7
+    }
+  ],
+  "underperforming_marketing_spend_count": 35,
+  "worst_marketing_examples": [
+    {
+      "country_code": "SE",
+      "month": "2025-08-01",
+      "channel": "paid_search",
+      "spend_eur": 1174.52,
+      "blended_roas": 5.61
+    },
+    {
+      "country_code": "SE",
+      "month": "2025-08-01",
+      "channel": "affiliate",
+      "spend_eur": 467.63,
+      "blended_roas": 14.08
+    },
+    {
+      "country_code": "NL",
+      "month": "2024-02-01",
+      "channel": "social_media",
+      "spend_eur": 1835.51,
+      "blended_roas": 7.22
+    }
+  ]
+}
