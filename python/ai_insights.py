@@ -199,7 +199,7 @@ def write_llm_report(evidence: dict) -> str | None:
     try:
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
-            model="claude-sonnet-5",
+            model="claude-sonnet-5-5",
             max_tokens=1500,
             system=system_prompt,
             messages=[{"role": "user", "content": f"Validated metrics:\n{json.dumps(evidence, indent=2, default=str)}"}],

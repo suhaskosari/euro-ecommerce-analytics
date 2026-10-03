@@ -1,5 +1,8 @@
 # European E-Commerce Intelligence & Customer Analytics Platform
 
+[![pipeline-ci](https://github.com/suhaskosari/euro-ecommerce-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/suhaskosari/euro-ecommerce-analytics/actions/workflows/ci.yml)
+**[Live dashboard](https://suhaskosari.github.io/euro-ecommerce-analytics/)** | [Anomaly evaluation](outputs/anomaly_eval.md) | [AI groundedness evaluation](outputs/groundedness_eval.md)
+
 An end-to-end analytics platform for a multi-country European e-commerce retailer: a Python/SQL data pipeline, a dbt dimensional model, statistical anomaly detection and customer segmentation, an AI-assisted insights layer, and Power BI dashboards on top.
 
 Built as a portfolio project on realistic **synthetic** data (no proprietary/real customer data is used) covering 7 European markets, 2 years of orders, returns, and marketing spend -- deliberately generated with the kind of messiness (duplicate rows, mixed date formats, missing values, sign errors) a real source-system export has, so the cleaning and testing layers have real work to do.
@@ -17,6 +20,8 @@ See [docs/architecture.md](docs/architecture.md) for the full pipeline diagram a
 - **Models** it as a tested star schema in dbt (DuckDB locally; [sql/schema.sql](sql/schema.sql) documents the same shapes as PostgreSQL DDL for production), with 23 passing dbt tests (uniqueness, null checks, referential integrity).
 - **Analyzes** it statistically: day-of-week-adjusted z-score anomaly detection on daily revenue, RFM customer segmentation, and a marketing-spend efficiency scan.
 - **Explains** it with an AI-assisted layer that turns the validated metrics into a narrative report -- grounded so it can only cite numbers that were actually computed, never invent them (works fully offline in rule-based mode; optionally Claude-enhanced if `ANTHROPIC_API_KEY` is set).
+- **Evaluates itself**: the anomaly detector is scored against the injected incidents (precision/recall with a threshold sweep, [outputs/anomaly_eval.md](outputs/anomaly_eval.md)), and the AI narrative is scored for numeric groundedness with a red-team of the checker ([outputs/groundedness_eval.md](outputs/groundedness_eval.md)).
+- **Runs in CI and Docker**: GitHub Actions rebuilds the whole pipeline, runs `dbt test` and `pytest` on every push; `docker build` gives the same reproducible run.
 - **Visualizes** it in Power BI: a documented data model, DAX measure library, and ready-to-import CSV exports (see [powerbi/](powerbi/)).
 
 ## Repository structure
@@ -75,6 +80,9 @@ DBT_PROFILES_DIR=dbt dbt test --project-dir dbt/euro_ecom
 python python/stats_anomaly_detection.py
 python python/ai_insights.py            # add --llm with ANTHROPIC_API_KEY set for Claude-phrased prose
 python python/export_for_powerbi.py
+python python/eval_groundedness.py      # add --llm to also score a Claude-phrased report
+python python/eval_anomaly_detection.py
+python python/build_dashboard.py        # regenerates docs/index.html from the outputs
 ```
 
 All commands are run from the repo root (dbt-duckdb resolves the warehouse path relative to your working directory -- see the note in `dbt/profiles.yml.example` if you relocate things).
@@ -87,7 +95,25 @@ Daily net revenue with statistically flagged anomalies (`outputs/revenue_anomali
 
 ![Revenue anomalies](outputs/revenue_anomalies.png)
 
-Three anomalies are deliberately injected into the synthetic data generator to validate the detection logic: a 3-day checkout outage (June 2024), a flash-sale demand spike (March 2025), and a paid-search overspend period (January 2025) -- all three are correctly flagged. See [docs/architecture.md](docs/architecture.md#data-quality-issues-deliberately-injected-and-how-theyre-caught) for the full list and [docs/sample_insights.md](docs/sample_insights.md) for the AI-generated narrative built on top of these metrics.
+Three incidents are deliberately injected into the synthetic data generator: a 3-day checkout outage (June 2024), a 2-day flash-sale spike (March 2025), and a paid-search overspend period (January 2025). Because they are injected, detectors can be scored against ground truth rather than judged by eye:
+
+| Detector (revenue incidents, 5 true days of 731) | Days flagged | Precision | Recall |
+|---|---:|---:|---:|
+| Weekday-median baseline on revenue, z > 2.5 | 57 | 7.0% | 80.0% |
+| STL + Poisson residual on order counts, abs(z) > 3.5 | 10 | 50.0% | 100.0% |
+
+The first detector finds the incidents but buries them in false alarms (it mistakes the Nov/Dec seasonal peak for anomalies); the second models seasonality and the Poisson noise of order arrivals. Only 5 true anomalous days exist, so treat these as relative comparisons, not production accuracy -- the caveats and a full threshold sweep are in [outputs/anomaly_eval.md](outputs/anomaly_eval.md). See [docs/architecture.md](docs/architecture.md#data-quality-issues-deliberately-injected-and-how-theyre-caught) for the full list and [docs/sample_insights.md](docs/sample_insights.md) for the AI-generated narrative built on top of these metrics.
+
+## Data provenance
+
+Everything is synthetic except the exchange rates: customers, orders, items, payments, returns and marketing spend come from a seeded generator (`python/generate_data.py`) with deliberately injected defects and incidents, and the ECB daily rates come from the live Frankfurter API. No real customer or company data is used. The consequence worth stating plainly: headline metrics (revenue, segment sizes, detection scores) describe the generator, not a real business -- the project demonstrates the engineering and analytical method, not discoveries about a market. Note that Faker-generated names can differ across library versions, so regenerating can change customer-level rows (and therefore RFM segment counts slightly) while revenue totals and incident dates stay fixed.
+
+## Testing and CI
+
+```bash
+pytest -q          # groundedness-checker unit tests + warehouse integrity checks
+docker build -t euro-ecom . && docker run --rm euro-ecom   # full pipeline in a container
+```
 
 ## Design notes
 

@@ -1,0 +1,44 @@
+name: pipeline-ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Generate, clean and load data
+        run: |
+          python python/generate_data.py
+          python python/fetch_exchange_rates.py
+          python python/etl_clean_transform.py
+          python python/load_warehouse.py
+
+      - name: Build and test the dbt model
+        run: |
+          cp dbt/profiles.yml.example dbt/profiles.yml
+          export DBT_PROFILES_DIR=dbt
+          dbt seed --project-dir dbt/euro_ecom
+          dbt run  --project-dir dbt/euro_ecom
+          dbt test --project-dir dbt/euro_ecom
+
+      - name: Analytics, AI insights and groundedness evaluation
+        run: |
+          python python/stats_anomaly_detection.py
+          python python/ai_insights.py
+          python python/export_for_powerbi.py
+          python python/eval_groundedness.py
+          python python/eval_anomaly_detection.py
+          python python/build_dashboard.py
+
+      - name: Unit and warehouse tests
+        run: pytest -q

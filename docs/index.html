@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EuroCart Analytics — European E-Commerce Intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Live view of a synthetic-data European e-commerce analytics platform: dbt-tested star schema, anomaly detection, RFM segmentation, and a measured-groundedness AI insights layer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:            #0d0d0d;
+    --surface:       #1a1a19;
+    --surface-2:     #212120;
+    --text-primary:  #ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:    #898781;
+    --grid:          #2c2c2a;
+    --baseline:      #383835;
+    --border:        rgba(255,255,255,0.10);
+    --accent:        #3987e5;
+    --accent-wash:   rgba(57,135,229,0.14);
+    --series-1:      #3987e5; /* blue   */
+    --series-2:      #d95926; /* orange */
+    --series-3:      #199e70; /* aqua   */
+    --series-4:      #c98500; /* yellow */
+    --series-5:      #d55181; /* magenta*/
+    --good:          #0ca30c;
+    --warning:       #fab219;
+    --serious:       #ec835a;
+    --critical:      #d03b3b;
+    --track:         rgba(255,255,255,0.06);
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg:            #f9f9f7;
+    --surface:       #fcfcfb;
+    --surface-2:     #f2f1ec;
+    --text-primary:  #0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:    #898781;
+    --grid:          #e1e0d9;
+    --baseline:      #c3c2b7;
+    --border:        rgba(11,11,11,0.10);
+    --accent:        #2a78d6;
+    --accent-wash:   rgba(42,120,214,0.09);
+    --series-1:      #2a78d6;
+    --series-2:      #eb6834;
+    --series-3:      #1baf7a;
+    --series-4:      #eda100;
+    --series-5:      #e87ba4;
+    --good:          #0ca30c;
+    --warning:       #fab219;
+    --serious:       #ec835a;
+    --critical:      #d03b3b;
+    --track:         rgba(11,11,11,0.05);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  h1, h2, h3 { text-wrap: balance; font-weight: 600; margin: 0; }
+  a { color: var(--accent); }
+  svg text { font-family: "IBM Plex Mono", ui-monospace, monospace; fill: var(--text-secondary); }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; gap: 14px;
+    padding-block: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; }
+  .brand-mark {
+    width: 20px; height: 20px; border-radius: 5px;
+    background: linear-gradient(135deg, var(--series-1), var(--series-3));
+    flex: none;
+  }
+  .nav-spacer { flex: 1; }
+  .nav-links { display: flex; align-items: center; gap: 16px; }
+  .nav-links a.textlink { color: var(--text-secondary); text-decoration: none; font-size: 13.5px; }
+  .nav-links a.textlink:hover { color: var(--text-primary); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 13px; border-radius: 7px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text-primary); text-decoration: none; font-size: 13px; font-weight: 500;
+    cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .theme-toggle {
+    width: 32px; height: 32px; padding: 0; justify-content: center;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px;
+    color: var(--text-secondary); cursor: pointer; font-size: 14px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding-block: 46px 30px; border-bottom: 1px solid var(--border); }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+  }
+  .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px var(--accent-wash); }
+  .hero h1 { font-size: clamp(28px, 4.2vw, 42px); line-height: 1.12; max-width: 18ch; }
+  .hero p.lead { color: var(--text-secondary); max-width: 62ch; margin-top: 16px; font-size: 16px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
+  .tag {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; padding: 4px 9px;
+    border: 1px solid var(--border); border-radius: 5px; color: var(--text-secondary);
+    background: var(--surface);
+  }
+
+  /* ---------- KPI strip ---------- */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    margin-top: 30px;
+  }
+  .kpi { background: var(--surface); padding: 16px 18px; min-width: 0; }
+  .kpi-label { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .kpi-value { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 25px; margin-top: 6px; }
+  .kpi-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+  .kpi-value.accent { color: var(--accent); }
+  .kpi-value.good { color: var(--good); }
+
+  /* ---------- Sections ---------- */
+  section { padding-block: 46px; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 22px; }
+  .section-head h2 { font-size: 22px; }
+  .section-head .num { font-family: "IBM Plex Mono", monospace; color: var(--accent); font-size: 13px; margin-right: 10px; }
+  .section-cap { color: var(--text-secondary); font-size: 13.5px; max-width: 56ch; }
+
+  .panel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .panel-grid.thirds { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 860px) { .panel-grid, .panel-grid.thirds { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 20px 16px; min-width: 0;
+  }
+  .panel-title { font-size: 14px; font-weight: 600; }
+  .panel-caption { font-size: 12px; color: var(--text-muted); margin-top: 3px; margin-bottom: 14px; }
+  .panel svg { display: block; width: 100%; height: auto; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+  .bar-track { fill: var(--track); }
+  .bar-1 { fill: var(--series-1); }
+  .bar-2 { fill: var(--series-2); }
+  .bar-3 { fill: var(--series-3); }
+  .bar-1:hover, .bar-2:hover, .bar-3:hover { opacity: 0.82; }
+  .chart-label { font-size: 11.5px; fill: var(--text-secondary); }
+  .chart-value { font-size: 11.5px; fill: var(--text-primary); font-weight: 600; }
+  .axis-line { stroke: var(--baseline); stroke-width: 1; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .line-path { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .area-path { fill: var(--series-1); opacity: 0.10; }
+  .line-dot { fill: var(--surface); stroke: var(--series-1); stroke-width: 2; }
+  .line-dot:hover { stroke-width: 3; }
+
+  /* ---------- Pipeline ---------- */
+  .pipeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  @media (max-width: 900px) { .pipeline { grid-template-columns: repeat(2, 1fr); } }
+  .pstep {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 14px 12px; position: relative; min-width: 0;
+  }
+  .pstep .pnum {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--accent);
+    background: var(--accent-wash); display: inline-block; padding: 1px 7px; border-radius: 5px; margin-bottom: 9px;
+  }
+  .pstep h3 { font-size: 13.5px; }
+  .pstep p { font-size: 12px; color: var(--text-secondary); margin: 5px 0 0; overflow-wrap: break-word; }
+  .pstep code { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--text-muted); overflow-wrap: break-word; }
+
+  /* ---------- Findings cards ---------- */
+  .finding {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+  }
+  .finding-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .finding-name { font-size: 13px; font-weight: 600; }
+  .pill {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em;
+    padding: 3px 8px; border-radius: 20px; white-space: nowrap;
+  }
+  .pill-reject { background: rgba(12,163,12,0.14); color: var(--good); }
+  .pill-warn { background: rgba(250,178,25,0.14); color: var(--warning); }
+  .anom-dot { fill: var(--critical); stroke: var(--surface); stroke-width: 1.5; }
+  .anom-dot.spike { fill: var(--series-4); }
+  table.dq { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.dq td, table.dq th { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  table.dq th { color:var(--text-muted); font-weight:500; font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+  table.dq td.n { font-family:"IBM Plex Mono",monospace; white-space:nowrap; }
+  .finding-hyp { font-size: 12px; color: var(--text-secondary); }
+  .finding-hyp b { color: var(--text-primary); font-weight: 600; }
+  .finding-stat { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ---------- Governance ---------- */
+  .gov-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 860px) { .gov-grid { grid-template-columns: 1fr; } }
+  .gov-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  .gov-list li { display: flex; gap: 12px; }
+  .gov-check {
+    flex: none; width: 20px; height: 20px; border-radius: 50%; margin-top: 1px;
+    background: rgba(12,163,12,0.14); color: var(--good); display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .gov-list b { display: block; font-size: 13.5px; }
+  .gov-list span { font-size: 12.5px; color: var(--text-secondary); }
+  .gov-badge-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px;
+  }
+  .gov-badge-row { display: flex; align-items: center; gap: 10px; padding-block: 10px; border-bottom: 1px dashed var(--border); }
+  .gov-badge-row:last-child { border-bottom: none; }
+  .gov-badge-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none; }
+  .gov-badge-row .k { font-size: 12.5px; color: var(--text-secondary); flex: 1; }
+  .gov-badge-row .v { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--text-primary); }
+
+  /* ---------- Confusion matrix ---------- */
+  .cm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; }
+  .cm-cell { border-radius: 8px; padding: 12px 14px; border: 1px solid var(--border); }
+  .cm-cell .cm-v { font-family: "IBM Plex Mono", monospace; font-size: 20px; font-weight: 700; }
+  .cm-cell .cm-k { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .cm-tn { background: var(--accent-wash); }
+  .cm-tp { background: rgba(12,163,12,0.12); }
+  .cm-tp .cm-v { color: var(--good); }
+  .cm-tn .cm-v { color: var(--accent); }
+  .cm-fp, .cm-fn { background: rgba(250,178,25,0.10); }
+  .cm-fp .cm-v, .cm-fn .cm-v { color: var(--warning); }
+
+  /* ---------- Footer ---------- */
+  footer { padding-block: 34px 50px; }
+  .footer-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .footer-links { display: flex; gap: 18px; }
+  .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+  .footer-links a:hover { color: var(--accent); }
+  .footer-note { color: var(--text-muted); font-size: 12px; margin-top: 14px; max-width: 70ch; }
+
+  @media (max-width: 640px) {
+    .hero { padding-block: 34px 24px; }
+    section { padding-block: 34px; }
+    .nav-links a.textlink { display: none; }
+    .nav-links { gap: 8px; }
+    .btn { padding: 6px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="brand-mark"></span>EuroCart Analytics</div>
+    <div class="nav-spacer"></div>
+    <div class="nav-links">
+      <a class="textlink" href="#revenue">Revenue</a>
+      <a class="textlink" href="#anomalies">Anomalies</a>
+      <a class="textlink" href="#customers">Customers</a>
+      <a class="textlink" href="#ai">AI layer</a>
+      <a class="btn" href="https://github.com/suhaskosari/euro-ecommerce-analytics" target="_blank" rel="noopener">View on GitHub ↗</a>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Synthetic data · portfolio project</div>
+    <h1>One retailer, 7&nbsp;European markets, every number traceable.</h1>
+    <p class="lead">A pandas cleaning layer, a dbt-tested star schema, seasonal anomaly detection, RFM segmentation, and an AI-insights layer whose groundedness is <em>measured</em>, not assumed. All figures on this page are generated from the pipeline's own outputs by <code class="mono">python/build_dashboard.py</code>.</p>
+    <div class="tag-row" id="tagRow"></div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </div>
+</div>
+
+<section id="revenue">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">01</span>Revenue</h2></div>
+      <div class="section-cap">Net revenue after discounts and refunds, converted to EUR with ECB daily rates.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Monthly net revenue, all markets</div>
+      <div class="panel-caption">Hover a point for the exact value</div>
+      <svg id="chartMonthly"></svg>
+    </div>
+    <div class="panel-grid" style="margin-top:18px;">
+      <div class="panel">
+        <div class="panel-title">Net revenue by country</div>
+        <div class="panel-caption">EUR, full 2-year window</div>
+        <svg id="chartCountry"></svg>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Cost per conversion by marketing channel</div>
+        <div class="panel-caption">Total spend ÷ total conversions. Blended, not attributed: the data has no click-to-order tracking.</div>
+        <svg id="chartChannel"></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="anomalies">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">02</span>Anomaly detection</h2></div>
+      <div class="section-cap">STL seasonal decomposition of daily order counts, flagged with a Poisson residual test (|z| &gt; 3.5).</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Daily net revenue, flagged days highlighted</div>
+      <div class="panel-caption" id="anomCaption"></div>
+      <svg id="chartDaily"></svg>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--critical)"></span>Drop</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--series-4)"></span>Spike</div>
+      </div>
+    </div>
+    <p class="section-cap" style="margin-top:14px;max-width:80ch;">Flags use an STL seasonal decomposition of daily order counts with a Poisson residual test (|z| > 3.5). On the injected incidents it catches all 5 ground-truth days at 50% precision, versus 7% for the original weekday-median detector. See outputs/anomaly_eval.md for the full threshold sweep and its caveats.</p>
+  </div>
+</section>
+
+<section id="customers">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">03</span>Customers &amp; returns</h2></div>
+      <div class="section-cap">RFM segmentation on recency, frequency and monetary value, plus the leading return reasons.</div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-title">Revenue by RFM segment</div>
+        <div class="panel-caption" id="rfmCaption"></div>
+        <svg id="chartRfm"></svg>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Returns by reason</div>
+        <div class="panel-caption">Count of returned orders</div>
+        <svg id="chartReturns"></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">04</span>AI-insights layer: measured groundedness</h2></div>
+      <div class="section-cap">The narrative report may only cite numbers that exist in the validated evidence. A script checks this, and then checks the checker.</div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-title">Evaluation results</div>
+        <div class="panel-caption">From <code class="mono">python/eval_groundedness.py</code></div>
+        <div class="gov-badge-panel" style="border:none;padding:0;" id="evalRows"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">What this does and does not prove</div>
+        <div class="panel-caption">Limitations are part of the result</div>
+        <ul class="gov-list" id="evalNotes"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quality">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">05</span>Data quality</h2></div>
+      <div class="section-cap">Defects deliberately injected into the synthetic source, and what the pipeline did about each one.</div>
+    </div>
+    <div class="panel"><table class="dq" id="dqTable"><thead><tr><th>Source</th><th>Defect handled</th><th>Rows</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-row">
+      <div class="brand"><span class="brand-mark"></span>EuroCart Analytics</div>
+      <div class="footer-links">
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics" target="_blank" rel="noopener">Repository</a>
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics/blob/master/docs/architecture.md" target="_blank" rel="noopener">Architecture</a>
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics/blob/master/docs/sample_insights.md" target="_blank" rel="noopener">Sample insights</a>
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics/blob/master/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
+    </div>
+    <p class="footer-note">All customers, orders and marketing spend are synthetically generated; only the ECB exchange rates come from a live public API (Frankfurter). No real personal or commercial data is used. Built by Suhas Kosari.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement, toggle = document.getElementById('themeToggle');
+  function applyTheme(t) { if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); }
+  try { var saved = localStorage.getItem('eca-theme'); if (saved) applyTheme(saved); } catch (e) {}
+  toggle.addEventListener('click', function () {
+    var cur = root.getAttribute('data-theme');
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = (cur ? cur === 'dark' : dark) ? 'light' : 'dark';
+    applyTheme(next); try { localStorage.setItem('eca-theme', next); } catch (e) {}
+  });
+
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function text(x, y, s, cls, anchor) { var t = el('text', { x: x, y: y, class: cls || 'chart-label' }); if (anchor) t.setAttribute('text-anchor', anchor); t.textContent = s; return t; }
+  function svgTitle(n, s) { var t = el('title', {}); t.textContent = s; n.appendChild(t); return n; }
+  function eur(v) { return v >= 1e6 ? '€' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '€' + (v / 1e3).toFixed(0) + 'k' : '€' + v.toFixed(0); }
+
+  var DATA = {"kpis":[{"label":"Net revenue","value":"\u20ac6.24M","sub":"completed orders, 2024\u20132025"},{"label":"Orders","value":"20,225","sub":"7 markets"},{"label":"Customers","value":"4,000","sub":"deduplicated"},{"label":"dbt tests","value":"23/23","sub":"unique \u00b7 not-null \u00b7 FK","cls":"good"},{"label":"AI claims grounded","value":"93/93","sub":"numbers traced to evidence","cls":"accent"}],"tags":["SQL","Python","Pandas","dbt","DuckDB","PostgreSQL","Power BI","DAX","Statistics","Anomaly Detection","RFM","Marketing Analytics","LLM Evaluation","GitHub Actions","Docker"],"monthly":[["2024-01-01",207968.53],["2024-02-01",190051.98],["2024-03-01",210907.25],["2024-04-01",222801.44],["2024-05-01",240919.03999999998],["2024-06-01",201273.47],["2024-07-01",175128.81],["2024-08-01",166530.25],["2024-09-01",237579.68],["2024-10-01",233375.79],["2024-11-01",345901.48],["2024-12-01",425217.05],["2025-01-01",205490.51],["2025-02-01",233231.22],["2025-03-01",289272.52],["2025-04-01",223474.49],["2025-05-01",276390.48],["2025-06-01",239079.97],["2025-07-01",206276.93],["2025-08-01",227718.26],["2025-09-01",280320.73],["2025-10-01",284759.16000000003],["2025-11-01",410887.17],["2025-12-01",506749.22000000003]],"country":[{"label":"DE","value":1591653.93},{"label":"FR","value":1243979.1},{"label":"GB","value":1225857.98},{"label":"ES","value":767636.14},{"label":"NL","value":616565.75},{"label":"IT","value":483248.96},{"label":"SE","value":312363.57}],"channel":[{"label":"paid search","value":7.479243959290115},{"label":"social media","value":7.6812590541426795},{"label":"affiliate","value":7.8781142668428},{"label":"email","value":8.720676562733104}],"daily":[["2024-01-01",6967.61],["2024-01-02",2324.06],["2024-01-03",4276.82],["2024-01-04",4453.2],["2024-01-05",7761.64],["2024-01-06",9242.13],["2024-01-07",6244.77],["2024-01-08",5567.03],["2024-01-09",4849.88],["2024-01-10",8232.53],["2024-01-11",7607.11],["2024-01-12",5347.24],["2024-01-13",15615.69],["2024-01-14",8939.37],["2024-01-15",5484.93],["2024-01-16",6991.41],["2024-01-17",4724.65],["2024-01-18",5281.51],["2024-01-19",4380.85],["2024-01-20",8074.05],["2024-01-21",7189.84],["2024-01-22",4923.2],["2024-01-23",3077.04],["2024-01-24",6237.81],["2024-01-25",4561.19],["2024-01-26",7831.04],["2024-01-27",8744.86],["2024-01-28",11138.83],["2024-01-29",5366.58],["2024-01-30",9147.35],["2024-01-31",7384.31],["2024-02-01",3611.38],["2024-02-02",7568.86],["2024-02-03",10146.88],["2024-02-04",8693.83],["2024-02-05",3649.83],["2024-02-06",5311.81],["2024-02-07",8508.15],["2024-02-08",3495.08],["2024-02-09",7970.31],["2024-02-10",8562.3],["2024-02-11",8843.17],["2024-02-12",6583.95],["2024-02-13",7852.92],["2024-02-14",8462.92],["2024-02-15",2151.08],["2024-02-16",7048.54],["2024-02-17",6450.47],["2024-02-18",12252.04],["2024-02-19",7390.11],["2024-02-20",3752.01],["2024-02-21",6716.79],["2024-02-22",4201.39],["2024-02-23",4059.27],["2024-02-24",9776.29],["2024-02-25",9241.4],["2024-02-26",3280.63],["2024-02-27",5258.67],["2024-02-28",6926.36],["2024-02-29",2285.54],["2024-03-01",3977.82],["2024-03-02",8098.8],["2024-03-03",8705.44],["2024-03-04",5930.05],["2024-03-05",5180.96],["2024-03-06",7994.59],["2024-03-07",9451.0],["2024-03-08",4884.34],["2024-03-09",5748.38],["2024-03-10",7112.95],["2024-03-11",4180.01],["2024-03-12",4206.07],["2024-03-13",6033.49],["2024-03-14",7364.26],["2024-03-15",4463.96],["2024-03-16",6760.12],["2024-03-17",5666.69],["2024-03-18",9410.3],["2024-03-19",15917.34],["2024-03-20",6300.95],["2024-03-21",8592.23],["2024-03-22",4743.17],["2024-03-23",5828.94],["2024-03-24",4119.65],["2024-03-25",9755.83],["2024-03-26",6498.47],["2024-03-27",8192.61],["2024-03-28",4581.75],["2024-03-29",5256.13],["2024-03-30",10009.64],["2024-03-31",5941.31],["2024-04-01",7964.67],["2024-04-02",7682.54],["2024-04-03",5994.03],["2024-04-04",5404.24],["2024-04-05",7810.34],["2024-04-06",5063.45],["2024-04-07",6110.33],["2024-04-08",5803.69],["2024-04-09",7259.57],["2024-04-10",5489.91],["2024-04-11",5140.55],["2024-04-12",5797.96],["2024-04-13",7662.7],["2024-04-14",8882.59],["2024-04-15",6175.67],["2024-04-16",9141.45],["2024-04-17",12086.05],["2024-04-18",5819.96],["2024-04-19",4888.54],["2024-04-20",6915.76],["2024-04-21",9676.17],["2024-04-22",7024.05],["2024-04-23",12186.74],["2024-04-24",11392.78],["2024-04-25",11851.47],["2024-04-26",6030.96],["2024-04-27",9616.33],["2024-04-28",5928.73],["2024-04-29",7574.75],["2024-04-30",4425.46],["2024-05-01",6819.51],["2024-05-02",5596.9],["2024-05-03",5291.88],["2024-05-04",3964.42],["2024-05-05",9558.42],["2024-05-06",6027.21],["2024-05-07",6607.31],["2024-05-08",8366.45],["2024-05-09",10742.9],["2024-05-10",5906.92],["2024-05-11",11407.81],["2024-05-12",8588.28],["2024-05-13",13050.29],["2024-05-14",6241.69],["2024-05-15",4933.54],["2024-05-16",7944.17],["2024-05-17",9919.63],["2024-05-18",7897.96],["2024-05-19",3445.43],["2024-05-20",8881.12],["2024-05-21",9279.42],["2024-05-22",12765.05],["2024-05-23",10306.99],["2024-05-24",6433.77],["2024-05-25",8874.5],["2024-05-26",5225.76],["2024-05-27",4877.36],["2024-05-28",8792.89],["2024-05-29",5478.89],["2024-05-30",9170.83],["2024-05-31",8521.74],["2024-06-01",7739.3],["2024-06-02",6902.96],["2024-06-03",7592.99],["2024-06-04",8726.64],["2024-06-05",5014.19],["2024-06-06",13140.68],["2024-06-07",7547.57],["2024-06-08",6605.19],["2024-06-09",12744.98],["2024-06-10",320.39],["2024-06-11",835.92],["2024-06-12",1724.64],["2024-06-13",3037.99],["2024-06-14",8084.54],["2024-06-15",8088.95],["2024-06-16",3699.44],["2024-06-17",6711.78],["2024-06-18",6256.01],["2024-06-19",8244.14],["2024-06-20",6388.46],["2024-06-21",5227.1],["2024-06-22",6508.33],["2024-06-23",10057.05],["2024-06-24",7650.39],["2024-06-25",6407.09],["2024-06-26",5557.98],["2024-06-27",8523.54],["2024-06-28",6923.9],["2024-06-29",6789.91],["2024-06-30",8221.42],["2024-07-01",4596.92],["2024-07-02",7427.47],["2024-07-03",4343.72],["2024-07-04",3679.66],["2024-07-05",5036.03],["2024-07-06",4490.97],["2024-07-07",6617.97],["2024-07-08",4948.58],["2024-07-09",2330.15],["2024-07-10",3838.82],["2024-07-11",4106.73],["2024-07-12",1573.34],["2024-07-13",5179.29],["2024-07-14",8670.12],["2024-07-15",3835.91],["2024-07-16",8619.19],["2024-07-17",5644.27],["2024-07-18",2879.57],["2024-07-19",6804.31],["2024-07-20",5872.33],["2024-07-21",8469.19],["2024-07-22",2606.04],["2024-07-23",6827.12],["2024-07-24",5814.96],["2024-07-25",9379.79],["2024-07-26",6711.35],["2024-07-27",7412.73],["2024-07-28",8619.02],["2024-07-29",7678.25],["2024-07-30",5541.98],["2024-07-31",5573.03],["2024-08-01",2416.61],["2024-08-02",5190.23],["2024-08-03",1999.7],["2024-08-04",7490.77],["2024-08-05",3015.93],["2024-08-06",4364.1],["2024-08-07",3156.87],["2024-08-08",6842.07],["2024-08-09",3390.88],["2024-08-10",5538.28],["2024-08-11",4133.25],["2024-08-12",7018.19],["2024-08-13",6471.16],["2024-08-14",3599.1],["2024-08-15",3327.49],["2024-08-16",4288.89],["2024-08-17",9139.35],["2024-08-18",6884.68],["2024-08-19",4609.36],["2024-08-20",6695.45],["2024-08-21",3994.82],["2024-08-22",9191.32],["2024-08-23",7498.17],["2024-08-24",8181.63],["2024-08-25",5842.06],["2024-08-26",2877.27],["2024-08-27",3495.22],["2024-08-28",5145.23],["2024-08-29",6239.83],["2024-08-30",7601.3],["2024-08-31",6891.04],["2024-09-01",8456.76],["2024-09-02",12886.13],["2024-09-03",7129.61],["2024-09-04",7204.65],["2024-09-05",10788.48],["2024-09-06",5275.76],["2024-09-07",6862.8],["2024-09-08",6330.84],["2024-09-09",7468.5],["2024-09-10",6046.38],["2024-09-11",5341.3],["2024-09-12",10243.61],["2024-09-13",5163.42],["2024-09-14",10324.36],["2024-09-15",14460.66],["2024-09-16",6176.0],["2024-09-17",8207.36],["2024-09-18",7463.21],["2024-09-19",5529.19],["2024-09-20",8816.7],["2024-09-21",8378.52],["2024-09-22",8465.37],["2024-09-23",6995.33],["2024-09-24",11187.19],["2024-09-25",4670.21],["2024-09-26",8594.34],["2024-09-27",5740.53],["2024-09-28",7694.75],["2024-09-29",7254.81],["2024-09-30",8422.91],["2024-10-01",3353.78],["2024-10-02",5294.4],["2024-10-03",9155.29],["2024-10-04",13042.57],["2024-10-05",8658.55],["2024-10-06",10532.82],["2024-10-07",13610.39],["2024-10-08",10421.29],["2024-10-09",6837.08],["2024-10-10",4470.05],["2024-10-11",6425.56],["2024-10-12",3918.46],["2024-10-13",10397.96],["2024-10-14",2248.13],["2024-10-15",7586.19],["2024-10-16",6151.49],["2024-10-17",10195.98],["2024-10-18",4866.31],["2024-10-19",9016.42],["2024-10-20",10528.27],["2024-10-21",4626.98],["2024-10-22",7253.28],["2024-10-23",4718.19],["2024-10-24",4647.02],["2024-10-25",6286.28],["2024-10-26",9173.01],["2024-10-27",8072.37],["2024-10-28",5341.63],["2024-10-29",7255.5],["2024-10-30",8039.12],["2024-10-31",11251.42],["2024-11-01",5257.16],["2024-11-02",14006.87],["2024-11-03",12457.95],["2024-11-04",11441.36],["2024-11-05",8166.5],["2024-11-06",9037.95],["2024-11-07",14383.65],["2024-11-08",9103.01],["2024-11-09",20587.01],["2024-11-10",8913.09],["2024-11-11",8846.69],["2024-11-12",14248.9],["2024-11-13",9169.45],["2024-11-14",11978.75],["2024-11-15",11922.9],["2024-11-16",15424.14],["2024-11-17",9983.06],["2024-11-18",16382.42],["2024-11-19",8459.38],["2024-11-20",7189.1],["2024-11-21",11774.68],["2024-11-22",5499.25],["2024-11-23",12257.06],["2024-11-24",15340.54],["2024-11-25",6473.17],["2024-11-26",8870.72],["2024-11-27",16567.71],["2024-11-28",11570.29],["2024-11-29",11657.01],["2024-11-30",18931.71],["2024-12-01",19343.17],["2024-12-02",12621.38],["2024-12-03",13804.84],["2024-12-04",11386.01],["2024-12-05",6948.94],["2024-12-06",14880.19],["2024-12-07",10161.69],["2024-12-08",15983.29],["2024-12-09",15480.08],["2024-12-10",16121.75],["2024-12-11",11842.76],["2024-12-12",15874.89],["2024-12-13",11729.97],["2024-12-14",16075.8],["2024-12-15",13810.85],["2024-12-16",10784.16],["2024-12-17",10843.14],["2024-12-18",15596.49],["2024-12-19",9935.28],["2024-12-20",12120.7],["2024-12-21",18581.61],["2024-12-22",13585.22],["2024-12-23",11529.46],["2024-12-24",15757.69],["2024-12-25",12511.32],["2024-12-26",14068.65],["2024-12-27",14200.08],["2024-12-28",12196.95],["2024-12-29",12757.47],["2024-12-30",16201.44],["2024-12-31",18481.78],["2025-01-01",9457.19],["2025-01-02",6015.73],["2025-01-03",8476.99],["2025-01-04",6266.23],["2025-01-05",12502.05],["2025-01-06",9084.78],["2025-01-07",6312.44],["2025-01-08",8725.91],["2025-01-09",4398.73],["2025-01-10",6585.96],["2025-01-11",5034.26],["2025-01-12",11443.29],["2025-01-13",6004.32],["2025-01-14",3793.91],["2025-01-15",6821.58],["2025-01-16",5769.11],["2025-01-17",3473.67],["2025-01-18",4448.33],["2025-01-19",7212.34],["2025-01-20",9670.66],["2025-01-21",7440.23],["2025-01-22",7008.1],["2025-01-23",2682.06],["2025-01-24",3062.63],["2025-01-25",9477.39],["2025-01-26",3650.71],["2025-01-27",3612.33],["2025-01-28",6094.47],["2025-01-29",8341.64],["2025-01-30",5633.11],["2025-01-31",6990.36],["2025-02-01",9213.16],["2025-02-02",6960.94],["2025-02-03",8088.84],["2025-02-04",8979.44],["2025-02-05",7853.36],["2025-02-06",7574.31],["2025-02-07",6744.86],["2025-02-08",10247.98],["2025-02-09",9835.19],["2025-02-10",6148.14],["2025-02-11",9131.75],["2025-02-12",5092.32],["2025-02-13",8093.69],["2025-02-14",7808.77],["2025-02-15",13932.35],["2025-02-16",15808.5],["2025-02-17",6194.14],["2025-02-18",5034.1],["2025-02-19",7330.89],["2025-02-20",5813.69],["2025-02-21",4100.75],["2025-02-22",9822.48],["2025-02-23",11622.04],["2025-02-24",6951.37],["2025-02-25",10147.57],["2025-02-26",6311.12],["2025-02-27",10579.32],["2025-02-28",7810.15],["2025-03-01",9890.38],["2025-03-02",9030.89],["2025-03-03",27139.28],["2025-03-04",27878.79],["2025-03-05",8090.83],["2025-03-06",6882.88],["2025-03-07",9393.33],["2025-03-08",6351.12],["2025-03-09",6410.59],["2025-03-10",4651.56],["2025-03-11",7503.83],["2025-03-12",8494.12],["2025-03-13",9030.14],["2025-03-14",8973.75],["2025-03-15",10668.34],["2025-03-16",10465.28],["2025-03-17",9171.12],["2025-03-18",7286.08],["2025-03-19",10665.18],["2025-03-20",5468.54],["2025-03-21",8635.41],["2025-03-22",8616.75],["2025-03-23",6855.8],["2025-03-24",8194.19],["2025-03-25",6335.89],["2025-03-26",5662.77],["2025-03-27",8181.69],["2025-03-28",7084.19],["2025-03-29",8775.99],["2025-03-30",11687.41],["2025-03-31",5796.4],["2025-04-01",8057.42],["2025-04-02",7947.61],["2025-04-03",6696.32],["2025-04-04",9781.03],["2025-04-05",6933.85],["2025-04-06",10421.57],["2025-04-07",8082.15],["2025-04-08",7325.14],["2025-04-09",5210.83],["2025-04-10",9312.16],["2025-04-11",10048.92],["2025-04-12",3856.12],["2025-04-13",10719.75],["2025-04-14",7264.45],["2025-04-15",7551.24],["2025-04-16",5030.45],["2025-04-17",3919.74],["2025-04-18",5239.79],["2025-04-19",14969.63],["2025-04-20",8370.91],["2025-04-21",11624.43],["2025-04-22",7518.27],["2025-04-23",4686.61],["2025-04-24",8026.2],["2025-04-25",3572.04],["2025-04-26",6354.54],["2025-04-27",5881.96],["2025-04-28",7627.74],["2025-04-29",6912.41],["2025-04-30",4531.21],["2025-05-01",5374.89],["2025-05-02",14712.13],["2025-05-03",12047.86],["2025-05-04",8374.6],["2025-05-05",4460.59],["2025-05-06",7619.03],["2025-05-07",12516.74],["2025-05-08",4359.3],["2025-05-09",9412.75],["2025-05-10",6981.08],["2025-05-11",10093.22],["2025-05-12",10383.2],["2025-05-13",11400.0],["2025-05-14",8740.24],["2025-05-15",12030.72],["2025-05-16",7524.63],["2025-05-17",16789.37],["2025-05-18",9313.69],["2025-05-19",9335.66],["2025-05-20",6216.57],["2025-05-21",9878.25],["2025-05-22",5765.91],["2025-05-23",8286.1],["2025-05-24",12248.29],["2025-05-25",9554.9],["2025-05-26",6935.54],["2025-05-27",6524.7],["2025-05-28",6007.59],["2025-05-29",8106.81],["2025-05-30",8934.22],["2025-05-31",6461.9],["2025-06-01",9675.77],["2025-06-02",4112.83],["2025-06-03",7599.44],["2025-06-04",7392.96],["2025-06-05",5755.84],["2025-06-06",8640.06],["2025-06-07",11786.43],["2025-06-08",9654.97],["2025-06-09",4512.39],["2025-06-10",7033.45],["2025-06-11",4472.78],["2025-06-12",7035.18],["2025-06-13",4422.55],["2025-06-14",11611.78],["2025-06-15",9327.31],["2025-06-16",12072.0],["2025-06-17",8089.32],["2025-06-18",10676.33],["2025-06-19",8511.82],["2025-06-20",6456.27],["2025-06-21",6921.61],["2025-06-22",13697.42],["2025-06-23",6404.05],["2025-06-24",7400.39],["2025-06-25",6062.99],["2025-06-26",5763.71],["2025-06-27",11093.54],["2025-06-28",6624.26],["2025-06-29",10967.99],["2025-06-30",5304.53],["2025-07-01",5136.09],["2025-07-02",6840.93],["2025-07-03",8735.4],["2025-07-04",5243.74],["2025-07-05",10118.69],["2025-07-06",6753.28],["2025-07-07",4766.52],["2025-07-08",3218.6],["2025-07-09",7833.1],["2025-07-10",3213.54],["2025-07-11",6771.99],["2025-07-12",3875.42],["2025-07-13",4748.69],["2025-07-14",10700.33],["2025-07-15",3501.6],["2025-07-16",6741.52],["2025-07-17",5850.27],["2025-07-18",7185.84],["2025-07-19",7489.05],["2025-07-20",8748.62],["2025-07-21",8687.62],["2025-07-22",6900.48],["2025-07-23",7444.93],["2025-07-24",8688.36],["2025-07-25",4178.71],["2025-07-26",8230.41],["2025-07-27",10928.02],["2025-07-28",6128.16],["2025-07-29",8150.13],["2025-07-30",6235.61],["2025-07-31",3231.28],["2025-08-01",6575.16],["2025-08-02",4119.53],["2025-08-03",7450.2],["2025-08-04",9545.66],["2025-08-05",4615.61],["2025-08-06",3747.26],["2025-08-07",10598.07],["2025-08-08",6870.45],["2025-08-09",9385.46],["2025-08-10",7360.38],["2025-08-11",2937.47],["2025-08-12",10111.22],["2025-08-13",6392.73],["2025-08-14",4447.67],["2025-08-15",5756.25],["2025-08-16",8875.47],["2025-08-17",7363.9],["2025-08-18",3719.68],["2025-08-19",4860.32],["2025-08-20",5830.45],["2025-08-21",11429.92],["2025-08-22",6875.05],["2025-08-23",8071.24],["2025-08-24",13141.94],["2025-08-25",3780.21],["2025-08-26",8063.06],["2025-08-27",7977.87],["2025-08-28",12663.76],["2025-08-29",5985.35],["2025-08-30",10057.51],["2025-08-31",9109.41],["2025-09-01",9392.9],["2025-09-02",5359.31],["2025-09-03",11725.91],["2025-09-04",5187.24],["2025-09-05",14752.3],["2025-09-06",9965.74],["2025-09-07",13746.81],["2025-09-08",11107.16],["2025-09-09",9986.71],["2025-09-10",6088.99],["2025-09-11",7391.29],["2025-09-12",8053.83],["2025-09-13",12200.08],["2025-09-14",12579.32],["2025-09-15",7509.72],["2025-09-16",8786.07],["2025-09-17",9354.67],["2025-09-18",11856.64],["2025-09-19",10458.05],["2025-09-20",6892.18],["2025-09-21",14381.89],["2025-09-22",8560.0],["2025-09-23",7471.03],["2025-09-24",7571.48],["2025-09-25",6603.07],["2025-09-26",9000.09],["2025-09-27",14918.67],["2025-09-28",9693.74],["2025-09-29",5858.49],["2025-09-30",3867.35],["2025-10-01",15764.89],["2025-10-02",12176.76],["2025-10-03",10966.76],["2025-10-04",12887.14],["2025-10-05",7374.26],["2025-10-06",6328.99],["2025-10-07",6422.24],["2025-10-08",7585.0],["2025-10-09",7949.92],["2025-10-10",9293.68],["2025-10-11",7290.41],["2025-10-12",4918.97],["2025-10-13",5664.08],["2025-10-14",9446.69],["2025-10-15",6921.46],["2025-10-16",8497.76],["2025-10-17",9277.45],["2025-10-18",14834.95],["2025-10-19",7842.58],["2025-10-20",6927.2],["2025-10-21",6373.72],["2025-10-22",15844.74],["2025-10-23",8216.22],["2025-10-24",10950.67],["2025-10-25",9883.01],["2025-10-26",10931.41],["2025-10-27",9890.16],["2025-10-28",6381.41],["2025-10-29",10769.88],["2025-10-30",6166.36],["2025-10-31",10980.39],["2025-11-01",14159.55],["2025-11-02",7797.46],["2025-11-03",13007.29],["2025-11-04",10810.8],["2025-11-05",10142.81],["2025-11-06",11706.24],["2025-11-07",14195.64],["2025-11-08",11536.05],["2025-11-09",18978.72],["2025-11-10",10266.23],["2025-11-11",11520.65],["2025-11-12",12878.74],["2025-11-13",7936.5],["2025-11-14",9127.77],["2025-11-15",14475.17],["2025-11-16",21262.5],["2025-11-17",10241.13],["2025-11-18",14998.79],["2025-11-19",12546.81],["2025-11-20",12335.07],["2025-11-21",13987.22],["2025-11-22",24424.58],["2025-11-23",15052.74],["2025-11-24",9872.46],["2025-11-25",15618.65],["2025-11-26",17135.72],["2025-11-27",14596.78],["2025-11-28",12898.27],["2025-11-29",17596.14],["2025-11-30",19780.69],["2025-12-01",12037.32],["2025-12-02",16678.7],["2025-12-03",13870.18],["2025-12-04",12644.29],["2025-12-05",18359.38],["2025-12-06",12988.34],["2025-12-07",21836.2],["2025-12-08",22119.43],["2025-12-09",12681.89],["2025-12-10",17746.45],["2025-12-11",10922.28],["2025-12-12",19958.11],["2025-12-13",16539.12],["2025-12-14",21746.69],["2025-12-15",19346.98],["2025-12-16",15843.78],["2025-12-17",18177.12],["2025-12-18",18312.17],["2025-12-19",18908.17],["2025-12-20",13221.01],["2025-12-21",20616.14],["2025-12-22",14597.19],["2025-12-23",12171.37],["2025-12-24",21293.2],["2025-12-25",13233.18],["2025-12-26",14342.15],["2025-12-27",14480.82],["2025-12-28",20922.81],["2025-12-29",11490.4],["2025-12-30",14092.86],["2025-12-31",15571.49]],"flags":[{"idx":160,"date":"2024-06-09","value":12744.98,"z":4.157,"direction":"spike"},{"idx":161,"date":"2024-06-10","value":320.39,"z":-3.728,"direction":"drop"},{"idx":162,"date":"2024-06-11","value":835.92,"z":-4.176,"direction":"drop"},{"idx":163,"date":"2024-06-12","value":1724.64,"z":-3.897,"direction":"drop"},{"idx":290,"date":"2024-10-17","value":10195.98,"z":3.59,"direction":"spike"},{"idx":427,"date":"2025-03-03","value":27139.28,"z":11.623,"direction":"spike"},{"idx":428,"date":"2025-03-04","value":27878.79,"z":11.234,"direction":"spike"},{"idx":563,"date":"2025-07-17","value":5850.27,"z":3.769,"direction":"spike"},{"idx":581,"date":"2025-08-04","value":9545.66,"z":3.676,"direction":"spike"},{"idx":729,"date":"2025-12-30","value":14092.86,"z":4.231,"direction":"spike"}],"rfm":[{"label":"Champions","value":1949237.5},{"label":"Potential Loyalist","value":1419181.2},{"label":"At Risk","value":1321348.2},{"label":"Hibernating","value":784085.0},{"label":"Loyal","value":767453.6}],"rfmCaption":"Champions 679 \u00b7 Potential Loyalist 1,130 \u00b7 At Risk 701 \u00b7 Hibernating 891 \u00b7 Loyal 580 customers","returns":[{"label":"wrong size","value":245},{"label":"late delivery","value":239},{"label":"not as described","value":238},{"label":"damaged","value":227},{"label":"quality issue","value":213},{"label":"changed mind","value":208},{"label":"unspecified","value":46}],"evalRows":[{"k":"Numeric claims checked","v":"93"},{"k":"Grounded in evidence","v":"93 (100%)"},{"k":"Injected hallucinations caught","v":"175/200 (87.5%)","warn":true}],"evalNotes":[{"ok":true,"t":"Every number is traceable","d":"The report is built from a computed evidence dict; the checker verifies each figure matches it within rounding."},{"ok":true,"t":"The checker is itself tested","d":"200 fabricated figures (one number altered 7\u201340%) were injected; 175 were caught."},{"ok":false,"t":"Known blind spot","d":"A fabricated number that coincides with another legitimate number slips through. Entity-level matching would close this."},{"ok":false,"t":"Numeric fidelity only","d":"It does not judge whether the prose draws a sensible conclusion from correct numbers."}],"dq":[["customers","dropped 40 exact duplicate customer_id rows","40"],["customers","130 rows (3.2%) have a missing email (kept null, not imputed)","130"],["products","imputed 6 missing unit_cost_eur values using median category cost ratio","6"],["orders","dropped 108 duplicate order_id rows (retried export job)","108"],["orders","normalized 1668 order_date values from DD/MM/YYYY to ISO format","1668"],["orders","corrected 54 rows with a negative net_amount_eur (data-entry sign error)","54"]]};
+
+  var kpiGrid = document.getElementById('kpiGrid');
+  DATA.kpis.forEach(function (k) {
+    var d = document.createElement('div'); d.className = 'kpi';
+    d.innerHTML = '<div class="kpi-label">' + k.label + '</div><div class="kpi-value tabular ' + (k.cls || '') + '">' + k.value + '</div><div class="kpi-sub">' + k.sub + '</div>';
+    kpiGrid.appendChild(d);
+  });
+  var tagRow = document.getElementById('tagRow');
+  DATA.tags.forEach(function (t) { var s = document.createElement('span'); s.className = 'tag'; s.textContent = t; tagRow.appendChild(s); });
+
+  function horizontalBar(svgId, data, opts) {
+    opts = opts || {};
+    var svg = document.getElementById(svgId), width = 560, rowH = 34, labelW = opts.labelW || 96, valueW = 78, gapTop = 4;
+    var chartW = width - labelW - valueW, height = data.length * rowH + gapTop;
+    svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+    var max = Math.max.apply(null, data.map(function (d) { return d.value; })) * 1.08;
+    data.forEach(function (d, i) {
+      var y = gapTop + i * rowH, barW = Math.max(d.value > 0 ? 3 : 0, (d.value / max) * chartW), f = opts.fmt ? opts.fmt(d.value) : d.value;
+      svg.appendChild(text(labelW - 10, y + rowH / 2 + 4, d.label, 'chart-label', 'end'));
+      svg.appendChild(el('rect', { x: labelW, y: y + 8, width: chartW, height: rowH - 16, rx: 4, class: 'bar-track' }));
+      var bar = el('rect', { x: labelW, y: y + 8, width: barW, height: rowH - 16, rx: 4, class: opts.cls || 'bar-1' });
+      svgTitle(bar, d.label + ': ' + f); svg.appendChild(bar);
+      svg.appendChild(text(labelW + barW + 8, y + rowH / 2 + 4, f, 'chart-value'));
+    });
+  }
+
+  function lineChart(svgId, pts, opts) {
+    var svg = document.getElementById(svgId), width = 1120, height = opts.height || 260, padL = 56, padB = 30, padT = 16, padR = 16;
+    var chartW = width - padL - padR, chartH = height - padT - padB;
+    svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+    var max = Math.max.apply(null, pts.map(function (d) { return d[1]; })) * 1.12, n = pts.length, stepX = chartW / (n - 1);
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) {
+      var y = padT + chartH - f * chartH;
+      svg.appendChild(el('line', { x1: padL, x2: width - padR, y1: y, y2: y, class: 'gridline' }));
+      svg.appendChild(text(padL - 8, y + 3, eur(f * max), 'chart-label', 'end'));
+    });
+    svg.appendChild(el('line', { x1: padL, x2: width - padR, y1: padT + chartH, y2: padT + chartH, class: 'axis-line' }));
+    var xy = pts.map(function (d, i) { return [padL + i * stepX, padT + chartH - (d[1] / max) * chartH]; });
+    var line = 'M ' + xy.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' L ');
+    svg.appendChild(el('path', { d: line + ' L ' + xy[n - 1][0].toFixed(1) + ' ' + (padT + chartH) + ' L ' + xy[0][0].toFixed(1) + ' ' + (padT + chartH) + ' Z', class: 'area-path' }));
+    svg.appendChild(el('path', { d: line, class: 'line-path', 'stroke-width': opts.thin ? 1.2 : 2 }));
+    var labelEvery = Math.ceil(n / 8);
+    pts.forEach(function (d, i) {
+      if (opts.dots) { var dot = el('circle', { cx: xy[i][0], cy: xy[i][1], r: 3.2, class: 'line-dot' }); svgTitle(dot, d[0] + ': ' + eur(d[1])); svg.appendChild(dot); }
+      if (i % labelEvery === 0 || i === n - 1) svg.appendChild(text(xy[i][0], height - 6, d[0].slice(0, 7), 'chart-label', 'middle'));
+    });
+    if (opts.flags) opts.flags.forEach(function (f) {
+      var idx = f.idx, c = el('circle', { cx: xy[idx][0], cy: xy[idx][1], r: 5, class: 'anom-dot ' + f.direction });
+      svgTitle(c, f.date + ': ' + eur(f.value) + ' (' + f.direction + ', z = ' + f.z.toFixed(2) + ')'); svg.appendChild(c);
+    });
+  }
+
+  lineChart('chartMonthly', DATA.monthly, { dots: true });
+  horizontalBar('chartCountry', DATA.country, { fmt: eur });
+  horizontalBar('chartChannel', DATA.channel, { cls: 'bar-2', labelW: 120, fmt: function (v) { return '€' + v.toFixed(2); } });
+  document.getElementById('anomCaption').textContent = DATA.flags.length + ' flagged days out of ' + DATA.daily.length + ' · hover a marker for date, value and z-score';
+  lineChart('chartDaily', DATA.daily, { thin: true, flags: DATA.flags, height: 300 });
+  document.getElementById('rfmCaption').textContent = DATA.rfmCaption;
+  horizontalBar('chartRfm', DATA.rfm, { cls: 'bar-3', labelW: 160, fmt: eur });
+  horizontalBar('chartReturns', DATA.returns, { cls: 'bar-1', labelW: 160, fmt: function (v) { return v.toLocaleString(); } });
+
+  var er = document.getElementById('evalRows');
+  DATA.evalRows.forEach(function (r) {
+    var d = document.createElement('div'); d.className = 'gov-badge-row';
+    d.innerHTML = '<span class="dot"' + (r.warn ? ' style="background:var(--warning)"' : '') + '></span><span class="k">' + r.k + '</span><span class="v">' + r.v + '</span>';
+    er.appendChild(d);
+  });
+  var en = document.getElementById('evalNotes');
+  DATA.evalNotes.forEach(function (n) {
+    var li = document.createElement('li');
+    li.innerHTML = '<div class="gov-check">' + (n.ok ? '✓' : '!') + '</div><div><b>' + n.t + '</b><span>' + n.d + '</span></div>';
+    en.appendChild(li);
+  });
+
+  var tb = document.querySelector('#dqTable tbody');
+  DATA.dq.forEach(function (r) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="n">' + r[0] + '</td><td>' + r[1] + '</td><td class="n">' + r[2] + '</td>';
+    tb.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>

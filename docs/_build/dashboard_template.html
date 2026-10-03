@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EuroCart Analytics — European E-Commerce Intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Live view of a synthetic-data European e-commerce analytics platform: dbt-tested star schema, anomaly detection, RFM segmentation, and a measured-groundedness AI insights layer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>{{CSS}}</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="brand-mark"></span>EuroCart Analytics</div>
+    <div class="nav-spacer"></div>
+    <div class="nav-links">
+      <a class="textlink" href="#revenue">Revenue</a>
+      <a class="textlink" href="#anomalies">Anomalies</a>
+      <a class="textlink" href="#customers">Customers</a>
+      <a class="textlink" href="#ai">AI layer</a>
+      <a class="btn" href="https://github.com/suhaskosari/euro-ecommerce-analytics" target="_blank" rel="noopener">View on GitHub ↗</a>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Synthetic data · portfolio project</div>
+    <h1>One retailer, 7&nbsp;European markets, every number traceable.</h1>
+    <p class="lead">A pandas cleaning layer, a dbt-tested star schema, seasonal anomaly detection, RFM segmentation, and an AI-insights layer whose groundedness is <em>measured</em>, not assumed. All figures on this page are generated from the pipeline's own outputs by <code class="mono">python/build_dashboard.py</code>.</p>
+    <div class="tag-row" id="tagRow"></div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </div>
+</div>
+
+<section id="revenue">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">01</span>Revenue</h2></div>
+      <div class="section-cap">Net revenue after discounts and refunds, converted to EUR with ECB daily rates.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Monthly net revenue, all markets</div>
+      <div class="panel-caption">Hover a point for the exact value</div>
+      <svg id="chartMonthly"></svg>
+    </div>
+    <div class="panel-grid" style="margin-top:18px;">
+      <div class="panel">
+        <div class="panel-title">Net revenue by country</div>
+        <div class="panel-caption">EUR, full 2-year window</div>
+        <svg id="chartCountry"></svg>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Cost per conversion by marketing channel</div>
+        <div class="panel-caption">Total spend ÷ total conversions. Blended, not attributed: the data has no click-to-order tracking.</div>
+        <svg id="chartChannel"></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="anomalies">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">02</span>Anomaly detection</h2></div>
+      <div class="section-cap">STL seasonal decomposition of daily order counts, flagged with a Poisson residual test (|z| &gt; 3.5).</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Daily net revenue, flagged days highlighted</div>
+      <div class="panel-caption" id="anomCaption"></div>
+      <svg id="chartDaily"></svg>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--critical)"></span>Drop</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--series-4)"></span>Spike</div>
+      </div>
+    </div>
+    <p class="section-cap" style="margin-top:14px;max-width:80ch;">{{ANOMALY_NOTE}}</p>
+  </div>
+</section>
+
+<section id="customers">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">03</span>Customers &amp; returns</h2></div>
+      <div class="section-cap">RFM segmentation on recency, frequency and monetary value, plus the leading return reasons.</div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-title">Revenue by RFM segment</div>
+        <div class="panel-caption" id="rfmCaption"></div>
+        <svg id="chartRfm"></svg>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Returns by reason</div>
+        <div class="panel-caption">Count of returned orders</div>
+        <svg id="chartReturns"></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">04</span>AI-insights layer: measured groundedness</h2></div>
+      <div class="section-cap">The narrative report may only cite numbers that exist in the validated evidence. A script checks this, and then checks the checker.</div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-title">Evaluation results</div>
+        <div class="panel-caption">From <code class="mono">python/eval_groundedness.py</code></div>
+        <div class="gov-badge-panel" style="border:none;padding:0;" id="evalRows"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">What this does and does not prove</div>
+        <div class="panel-caption">Limitations are part of the result</div>
+        <ul class="gov-list" id="evalNotes"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quality">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2><span class="num">05</span>Data quality</h2></div>
+      <div class="section-cap">Defects deliberately injected into the synthetic source, and what the pipeline did about each one.</div>
+    </div>
+    <div class="panel"><table class="dq" id="dqTable"><thead><tr><th>Source</th><th>Defect handled</th><th>Rows</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-row">
+      <div class="brand"><span class="brand-mark"></span>EuroCart Analytics</div>
+      <div class="footer-links">
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics" target="_blank" rel="noopener">Repository</a>
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics/blob/master/docs/architecture.md" target="_blank" rel="noopener">Architecture</a>
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics/blob/master/docs/sample_insights.md" target="_blank" rel="noopener">Sample insights</a>
+        <a href="https://github.com/suhaskosari/euro-ecommerce-analytics/blob/master/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
+    </div>
+    <p class="footer-note">All customers, orders and marketing spend are synthetically generated; only the ECB exchange rates come from a live public API (Frankfurter). No real personal or commercial data is used. Built by Suhas Kosari.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement, toggle = document.getElementById('themeToggle');
+  function applyTheme(t) { if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); }
+  try { var saved = localStorage.getItem('eca-theme'); if (saved) applyTheme(saved); } catch (e) {}
+  toggle.addEventListener('click', function () {
+    var cur = root.getAttribute('data-theme');
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = (cur ? cur === 'dark' : dark) ? 'light' : 'dark';
+    applyTheme(next); try { localStorage.setItem('eca-theme', next); } catch (e) {}
+  });
+
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function text(x, y, s, cls, anchor) { var t = el('text', { x: x, y: y, class: cls || 'chart-label' }); if (anchor) t.setAttribute('text-anchor', anchor); t.textContent = s; return t; }
+  function svgTitle(n, s) { var t = el('title', {}); t.textContent = s; n.appendChild(t); return n; }
+  function eur(v) { return v >= 1e6 ? '€' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '€' + (v / 1e3).toFixed(0) + 'k' : '€' + v.toFixed(0); }
+
+  var DATA = {{DATA}};
+
+  var kpiGrid = document.getElementById('kpiGrid');
+  DATA.kpis.forEach(function (k) {
+    var d = document.createElement('div'); d.className = 'kpi';
+    d.innerHTML = '<div class="kpi-label">' + k.label + '</div><div class="kpi-value tabular ' + (k.cls || '') + '">' + k.value + '</div><div class="kpi-sub">' + k.sub + '</div>';
+    kpiGrid.appendChild(d);
+  });
+  var tagRow = document.getElementById('tagRow');
+  DATA.tags.forEach(function (t) { var s = document.createElement('span'); s.className = 'tag'; s.textContent = t; tagRow.appendChild(s); });
+
+  function horizontalBar(svgId, data, opts) {
+    opts = opts || {};
+    var svg = document.getElementById(svgId), width = 560, rowH = 34, labelW = opts.labelW || 96, valueW = 78, gapTop = 4;
+    var chartW = width - labelW - valueW, height = data.length * rowH + gapTop;
+    svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+    var max = Math.max.apply(null, data.map(function (d) { return d.value; })) * 1.08;
+    data.forEach(function (d, i) {
+      var y = gapTop + i * rowH, barW = Math.max(d.value > 0 ? 3 : 0, (d.value / max) * chartW), f = opts.fmt ? opts.fmt(d.value) : d.value;
+      svg.appendChild(text(labelW - 10, y + rowH / 2 + 4, d.label, 'chart-label', 'end'));
+      svg.appendChild(el('rect', { x: labelW, y: y + 8, width: chartW, height: rowH - 16, rx: 4, class: 'bar-track' }));
+      var bar = el('rect', { x: labelW, y: y + 8, width: barW, height: rowH - 16, rx: 4, class: opts.cls || 'bar-1' });
+      svgTitle(bar, d.label + ': ' + f); svg.appendChild(bar);
+      svg.appendChild(text(labelW + barW + 8, y + rowH / 2 + 4, f, 'chart-value'));
+    });
+  }
+
+  function lineChart(svgId, pts, opts) {
+    var svg = document.getElementById(svgId), width = 1120, height = opts.height || 260, padL = 56, padB = 30, padT = 16, padR = 16;
+    var chartW = width - padL - padR, chartH = height - padT - padB;
+    svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+    var max = Math.max.apply(null, pts.map(function (d) { return d[1]; })) * 1.12, n = pts.length, stepX = chartW / (n - 1);
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) {
+      var y = padT + chartH - f * chartH;
+      svg.appendChild(el('line', { x1: padL, x2: width - padR, y1: y, y2: y, class: 'gridline' }));
+      svg.appendChild(text(padL - 8, y + 3, eur(f * max), 'chart-label', 'end'));
+    });
+    svg.appendChild(el('line', { x1: padL, x2: width - padR, y1: padT + chartH, y2: padT + chartH, class: 'axis-line' }));
+    var xy = pts.map(function (d, i) { return [padL + i * stepX, padT + chartH - (d[1] / max) * chartH]; });
+    var line = 'M ' + xy.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' L ');
+    svg.appendChild(el('path', { d: line + ' L ' + xy[n - 1][0].toFixed(1) + ' ' + (padT + chartH) + ' L ' + xy[0][0].toFixed(1) + ' ' + (padT + chartH) + ' Z', class: 'area-path' }));
+    svg.appendChild(el('path', { d: line, class: 'line-path', 'stroke-width': opts.thin ? 1.2 : 2 }));
+    var labelEvery = Math.ceil(n / 8);
+    pts.forEach(function (d, i) {
+      if (opts.dots) { var dot = el('circle', { cx: xy[i][0], cy: xy[i][1], r: 3.2, class: 'line-dot' }); svgTitle(dot, d[0] + ': ' + eur(d[1])); svg.appendChild(dot); }
+      if (i % labelEvery === 0 || i === n - 1) svg.appendChild(text(xy[i][0], height - 6, d[0].slice(0, 7), 'chart-label', 'middle'));
+    });
+    if (opts.flags) opts.flags.forEach(function (f) {
+      var idx = f.idx, c = el('circle', { cx: xy[idx][0], cy: xy[idx][1], r: 5, class: 'anom-dot ' + f.direction });
+      svgTitle(c, f.date + ': ' + eur(f.value) + ' (' + f.direction + ', z = ' + f.z.toFixed(2) + ')'); svg.appendChild(c);
+    });
+  }
+
+  lineChart('chartMonthly', DATA.monthly, { dots: true });
+  horizontalBar('chartCountry', DATA.country, { fmt: eur });
+  horizontalBar('chartChannel', DATA.channel, { cls: 'bar-2', labelW: 120, fmt: function (v) { return '€' + v.toFixed(2); } });
+  document.getElementById('anomCaption').textContent = DATA.flags.length + ' flagged days out of ' + DATA.daily.length + ' · hover a marker for date, value and z-score';
+  lineChart('chartDaily', DATA.daily, { thin: true, flags: DATA.flags, height: 300 });
+  document.getElementById('rfmCaption').textContent = DATA.rfmCaption;
+  horizontalBar('chartRfm', DATA.rfm, { cls: 'bar-3', labelW: 160, fmt: eur });
+  horizontalBar('chartReturns', DATA.returns, { cls: 'bar-1', labelW: 160, fmt: function (v) { return v.toLocaleString(); } });
+
+  var er = document.getElementById('evalRows');
+  DATA.evalRows.forEach(function (r) {
+    var d = document.createElement('div'); d.className = 'gov-badge-row';
+    d.innerHTML = '<span class="dot"' + (r.warn ? ' style="background:var(--warning)"' : '') + '></span><span class="k">' + r.k + '</span><span class="v">' + r.v + '</span>';
+    er.appendChild(d);
+  });
+  var en = document.getElementById('evalNotes');
+  DATA.evalNotes.forEach(function (n) {
+    var li = document.createElement('li');
+    li.innerHTML = '<div class="gov-check">' + (n.ok ? '✓' : '!') + '</div><div><b>' + n.t + '</b><span>' + n.d + '</span></div>';
+    en.appendChild(li);
+  });
+
+  var tb = document.querySelector('#dqTable tbody');
+  DATA.dq.forEach(function (r) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="n">' + r[0] + '</td><td>' + r[1] + '</td><td class="n">' + r[2] + '</td>';
+    tb.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>
